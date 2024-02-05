@@ -31,15 +31,6 @@ public:
     float y{};
 };
 
-class Vector3
-{
-public:
-    Vector3();
-    Vector3(int x,int y,int z);
-    int x{};
-    int y{};
-    int z{};
-};
 
 class touch
 {
@@ -50,7 +41,7 @@ public:
     void touch_up(const int& id);//释放
     void touch_move(const int& id,const Vector2 &pos);//x轴移动到x，y轴移动到y
 private:
-    uinput_user_dev usetup;//驱动信息
+    uinput_user_dev usetup{};//驱动信息
     int uinputFd{};//uinput的文件标识符
     std::thread PTScreenEventToFingerThread{};//将物理触摸屏的Event转化存到Finger数组的线程
     std::thread GetScreenorientationThread{};//循环获取屏幕方向的线程

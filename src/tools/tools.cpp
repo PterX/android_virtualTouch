@@ -44,26 +44,12 @@ Vector2 &Vector2::operator=(const Vector2 &other)
     return *this;
 }
 
-Vector3::Vector3(int x, int y, int z)
-{
-    this->x = x;
-    this->y = y;
-    this->z = z;
-}
-
-Vector3::Vector3()
-{
-    x = 0;
-    y = 0;
-    z = 0;
-}
-
 void touch::InitTouchScreenInfo()
 {
     for (const auto &entry: std::filesystem::directory_iterator("/dev/input/"))
     {
         int fd = open(entry.path().c_str(), O_RDWR);
-        input_absinfo absinfo;
+        input_absinfo absinfo{};
         ioctl(fd, EVIOCGABS(ABS_MT_SLOT), &absinfo);
 
         if (absinfo.maximum == 9)
@@ -73,7 +59,7 @@ void touch::InitTouchScreenInfo()
             break;
         }
     }//遍历/dev/input/下所有eventX，如果ABS_MT_SLOT为9(即最大支持10点触控)就视为物理触摸屏
-    input_absinfo absX, absY;
+    input_absinfo absX{}, absY{};
     ioctl(touchScreenInfo.fd, EVIOCGABS(ABS_MT_POSITION_X), &absX);
     ioctl(touchScreenInfo.fd, EVIOCGABS(ABS_MT_POSITION_Y), &absY);
     this->touchScreenInfo.width = absX.maximum;
@@ -117,7 +103,6 @@ touch::touch()
     ioctl(uinputFd, UI_SET_KEYBIT, BTN_TOOL_FINGER);//支持的事件
 
 
-    //memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_SPI;
     usetup.id.vendor = 0x6c90;
     usetup.id.product = 0x8fb0;
