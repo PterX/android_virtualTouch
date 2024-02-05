@@ -11,13 +11,14 @@
 
 Vector2::Vector2(int x, int y)
 {
-    this->x =(float)x;
-    this->y =(float)y;
+    this->x = (float) x;
+    this->y = (float) y;
 }
+
 Vector2::Vector2(float x, float y)
 {
-    this->x =x;
-    this->y =y;
+    this->x = x;
+    this->y = y;
 }
 
 Vector2::Vector2()
@@ -43,11 +44,11 @@ Vector2 &Vector2::operator=(const Vector2 &other)
     return *this;
 }
 
-Vector3::Vector3(int x,int y,int z)
+Vector3::Vector3(int x, int y, int z)
 {
-    this->x =x;
-    this->y =y;
-    this->z =z;
+    this->x = x;
+    this->y = y;
+    this->z = z;
 }
 
 Vector3::Vector3()
@@ -59,15 +60,15 @@ Vector3::Vector3()
 
 void touch::InitTouchScreenInfo()
 {
-    for (const auto& entry : std::filesystem::directory_iterator("/dev/input/"))
+    for (const auto &entry: std::filesystem::directory_iterator("/dev/input/"))
     {
-        int fd = open(entry.path().c_str(),O_RDWR);
+        int fd = open(entry.path().c_str(), O_RDWR);
         input_absinfo absinfo;
         ioctl(fd, EVIOCGABS(ABS_MT_SLOT), &absinfo);
 
-        if(absinfo.maximum == 9)
+        if (absinfo.maximum == 9)
         {
-            this->touchScreenInfo.fd = open(entry.path().c_str(),O_RDWR);
+            this->touchScreenInfo.fd = open(entry.path().c_str(), O_RDWR);
             close(fd);
             break;
         }
@@ -82,7 +83,7 @@ void touch::InitTouchScreenInfo()
 void touch::InitScreenInfo()
 {
     std::string window_size = exec("wm size");
-    sscanf(window_size.c_str(),"Physical size: %dx%d",&this->screenInfo.width, &this->screenInfo.height);
+    sscanf(window_size.c_str(), "Physical size: %dx%d", &this->screenInfo.width, &this->screenInfo.height);
 }//初始化屏幕分辨率,方向单独放在一个线程了
 
 touch::touch()
@@ -93,7 +94,7 @@ touch::touch()
     sleep(2);
     PTScreenEventToFingerThread = std::thread(&touch::PTScreenEventToFinger, this);
     this->uinputFd = open("/dev/uinput", O_RDWR);
-    if(uinputFd < 0)
+    if (uinputFd < 0)
     {
         perror("打开uinput失败！！");
     }
@@ -115,9 +116,8 @@ touch::touch()
     ioctl(uinputFd, UI_SET_KEYBIT, BTN_TOUCH);
     ioctl(uinputFd, UI_SET_KEYBIT, BTN_TOOL_FINGER);//支持的事件
 
-    uinput_user_dev usetup{};
 
-    memset(&usetup, 0, sizeof(usetup));
+    //memset(&usetup, 0, sizeof(usetup));
     usetup.id.bustype = BUS_SPI;
     usetup.id.vendor = 0x6c90;
     usetup.id.product = 0x8fb0;
@@ -147,12 +147,13 @@ touch::touch()
 
     ioctl(uinputFd, UI_DEV_CREATE);//创建驱动
 
-    ioctl(this->touchScreenInfo.fd,EVIOCGRAB,0x1);//独占输入,只有此进程才能接收到事件 --
+    ioctl(this->touchScreenInfo.fd, EVIOCGRAB, 0x1);//独占输入,只有此进程才能接收到事件 --
 
-    std::cout << "触摸屏宽高  " << touchScreenInfo.width <<"   "<< touchScreenInfo.height << std::endl;
-    std::cout<<"屏幕分辨率  "<<screenInfo.width<<"   "<<screenInfo.height<<std::endl;
-    screenToTouchRatio = (float)(touchScreenInfo.width + touchScreenInfo.height) / (float)(screenInfo.width + screenInfo.height);
-    if(screenToTouchRatio < 1 && screenToTouchRatio > 0.9)
+    std::cout << "触摸屏宽高  " << touchScreenInfo.width << "   " << touchScreenInfo.height << std::endl;
+    std::cout << "屏幕分辨率  " << screenInfo.width << "   " << screenInfo.height << std::endl;
+    screenToTouchRatio =
+            (float) (touchScreenInfo.width + touchScreenInfo.height) / (float) (screenInfo.width + screenInfo.height);
+    if (screenToTouchRatio < 1 && screenToTouchRatio > 0.9)
     {
         screenToTouchRatio = 1;
     }
@@ -160,7 +161,7 @@ touch::touch()
     down.type = EV_KEY;
     down.code = BTN_TOUCH;
     down.value = 1;
-    write(uinputFd,&down,sizeof (down));
+    write(uinputFd, &down, sizeof(down));
     sleep(2);
 }
 
@@ -179,7 +180,7 @@ void touch::PTScreenEventToFinger()
     int latestSlot{};
     while (true)
     {
-        read(touchScreenInfo.fd,&ie,sizeof (ie));
+        read(touchScreenInfo.fd, &ie, sizeof(ie));
         {
             if (ie.type == EV_ABS)
             {
@@ -194,9 +195,10 @@ void touch::PTScreenEventToFinger()
                     if (ie.value == -1)
                     {
                         Fingers[0][latestSlot].isDown = false;
-                    }
-                    else
+                        Fingers[1][latestSlot].isUse = false;
+                    } else
                     {
+                        Fingers[1][latestSlot].isUse = true;
                         Fingers[0][latestSlot].isDown = true;
                     }
                     continue;
@@ -228,20 +230,20 @@ void touch::PTScreenEventToFinger()
 void touch::upLoad()
 {
     std::vector<input_event> events{};
-    for(auto& fingers : Fingers)
+    for (auto &fingers: Fingers)
     {
-        for(auto& finger: fingers)
+        for (auto &finger: fingers)
         {
-            if(finger.isDown)
+            if (finger.isDown)
             {
                 input_event down_events[]
-                {
-                    {.type = EV_ABS, .code = ABS_MT_TRACKING_ID, .value = finger.TRACKING_ID},
-                    {.type = EV_ABS, .code = ABS_MT_POSITION_X, .value = finger.x},
-                    {.type = EV_ABS, .code = ABS_MT_POSITION_Y, .value = finger.y},
-                    {.type = EV_SYN, .code = SYN_MT_REPORT, .value = 0},
-                };
-                int arrCount = sizeof (down_events) / sizeof (down_events[0]);
+                        {
+                                {.type = EV_ABS, .code = ABS_MT_TRACKING_ID, .value = finger.TRACKING_ID},
+                                {.type = EV_ABS, .code = ABS_MT_POSITION_X, .value = finger.x},
+                                {.type = EV_ABS, .code = ABS_MT_POSITION_Y, .value = finger.y},
+                                {.type = EV_SYN, .code = SYN_MT_REPORT, .value = 0},
+                        };
+                int arrCount = sizeof(down_events) / sizeof(down_events[0]);
                 events.insert(events.end(), down_events, down_events + arrCount);
             }
         }
@@ -256,19 +258,19 @@ void touch::upLoad()
     end.code = SYN_REPORT;
     end.value = 0;
     events.push_back(end);
-    for (const auto& event : events)
+    for (const auto &event: events)
     {
         write(uinputFd, &event, sizeof(event));
     }
     events.clear();
 }
 
-std::string touch::exec(std::string command)
+std::string touch::exec(const std::string& command)
 {
     char buffer[128];
-    std::string result = "";
+    std::string result{};
 
-    FILE* pipe = popen(command.c_str(), "r");
+    FILE *pipe = popen(command.c_str(), "r");
     while (!feof(pipe))
     {
         if (fgets(buffer, 128, pipe) != nullptr)
@@ -282,31 +284,29 @@ std::string touch::exec(std::string command)
 
 void touch::GetScrorientation()
 {
-    while(true)
+    while (true)
     {
         this->screenInfo.orientation = atoi(exec("dumpsys display | grep 'mCurrentOrientation' | cut -d'=' -f2").c_str());
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 
-Vector2 touch::rotatePointx(Vector2 pos, const Vector2 wh, bool reverse)
+Vector2 touch::rotatePointx(const Vector2 &pos, const Vector2& wh, bool reverse) const
 {
+    Vector2 xy{pos.x, pos.y};
     if (this->screenInfo.orientation == 0)
     {
-        return pos;
+        return xy;
     }
-    Vector2 xy(pos.x, pos.y);
     if (this->screenInfo.orientation == 3)
     {
         xy.x = reverse ? pos.y : (float) wh.y - pos.y;
         xy.y = reverse ? (float) wh.y - pos.x : pos.x;
-    }
-    else if (this->screenInfo.orientation == 2)
+    } else if (this->screenInfo.orientation == 2)
     {
-        xy.x = reverse ? (float) wh.x - pos.x : (float) wh.x - pos.x;
-        xy.y = reverse ? (float) wh.y - pos.y : (float) wh.y - pos.y;
-    }
-    else if (this->screenInfo.orientation == 1)
+        xy.x = (float) wh.x - pos.x;
+        xy.y = (float) wh.y - pos.y;
+    } else if (this->screenInfo.orientation == 1)
     {
         xy.x = reverse ? (float) wh.x - pos.x : pos.y;
         xy.y = reverse ? pos.y : (float) wh.x - pos.x;
@@ -314,11 +314,11 @@ Vector2 touch::rotatePointx(Vector2 pos, const Vector2 wh, bool reverse)
     return xy;
 }
 
-int touch::GetindexById(const int& byId)
+int touch::GetindexById(const int &byId)
 {
-    for(int i{0};i<10;i++)
+    for (int i{0}; i < 10; i++)
     {
-        if(Fingers[1][i].id == byId)
+        if (Fingers[1][i].id == byId)
         {
             return i;
         }
@@ -328,9 +328,9 @@ int touch::GetindexById(const int& byId)
 
 int touch::GetNoUseIndex()
 {
-    for(int i{0};i<10;i++)
+    for (int i{0}; i < 10; i++)
     {
-        if(!Fingers[1][i].isUse)
+        if (!Fingers[1][i].isUse)
         {
             return i;
         }
@@ -338,30 +338,32 @@ int touch::GetNoUseIndex()
     return -1;
 }
 
-void touch::touch_down(const int& id,Vector2 pos)
+void touch::touch_down(const int &id, const Vector2 &pos)
 {
     int index = GetNoUseIndex();
-    Vector2 newPos = rotatePointx(pos,{screenInfo.width,screenInfo.height}, true);
+    Vector2 newPos = rotatePointx(pos, {screenInfo.width, screenInfo.height}, true);
     Fingers[1][index].isDown = true;
     Fingers[1][index].id = id;
     Fingers[1][index].TRACKING_ID = 415411 + id;
-    Fingers[1][index].x = newPos.x;
-    Fingers[1][index].y = newPos.y;
+    Fingers[1][index].x = (int)newPos.x;
+    Fingers[1][index].y = (int)newPos.y;
+    Fingers[1][index].isUse = true;
     this->upLoad();
 }
 
-void touch::touch_move(const int& id, Vector2 pos)
+void touch::touch_move(const int &id, const Vector2 &pos)
 {
     int index = GetindexById(id);
-    Vector2 newPos = rotatePointx(pos,{screenInfo.width,screenInfo.height}, true);
-    Fingers[1][index].x = newPos.x;
-    Fingers[1][index].y = newPos.y;
+    Vector2 newPos = rotatePointx(pos, {screenInfo.width, screenInfo.height}, true);
+    Fingers[1][index].x = (int)newPos.x;
+    Fingers[1][index].y = (int)newPos.y;
     this->upLoad();
 }
 
-void touch::touch_up(const int& id)
+void touch::touch_up(const int &id)
 {
     int index = GetindexById(id);
     Fingers[1][index].isDown = false;
+    Fingers[1][index].isUse = false;
     this->upLoad();
 }
