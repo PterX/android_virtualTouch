@@ -339,6 +339,14 @@ void touch::touch_down(const int &id, const Vector2 &pos)
 void touch::touch_move(const int &id, const Vector2 &pos)
 {
     int index = GetindexById(id);
+    if(index == -1)
+    {
+        return;
+    }
+    if(!(Fingers[1][index].isUse && Fingers[1][index].isDown))
+    {
+        return;
+    }
     Vector2 newPos = rotatePointx(pos, {screenInfo.width, screenInfo.height}, true);
     Fingers[1][index].x = (int)newPos.x;
     Fingers[1][index].y = (int)newPos.y;
@@ -350,5 +358,6 @@ void touch::touch_up(const int &id)
     int index = GetindexById(id);
     Fingers[1][index].isDown = false;
     Fingers[1][index].isUse = false;
+    Fingers[1][index].id = 0;
     this->upLoad();
 }
