@@ -293,8 +293,8 @@ Vector2 touch::rotatePointx(const Vector2 &pos, const Vector2& wh, bool reverse)
         xy.y = (float) wh.y - pos.y;
     } else if (this->screenInfo.orientation == 1)
     {
-        xy.x = reverse ? (float) wh.x - pos.x : pos.y;
-        xy.y = reverse ? pos.y : (float) wh.x - pos.x;
+        xy.x = reverse ? (float) wh.x - pos.y : pos.y;
+        xy.y = reverse ? pos.x : (float) wh.x - pos.x;
     }
     return xy;
 }
