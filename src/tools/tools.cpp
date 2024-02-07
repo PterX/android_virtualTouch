@@ -132,12 +132,11 @@ touch::touch()
 
     ioctl(uinputFd, UI_DEV_CREATE);//创建驱动
 
-    ioctl(this->touchScreenInfo.fd, EVIOCGRAB, 0x1);//独占输入,只有此进程才能接收到事件 --
+    ioctl(this->touchScreenInfo.fd, EVIOCGRAB, 0x1);//独占输入,只有此进程才能接收到事件 -_-
 
     std::cout << "触摸屏宽高  " << touchScreenInfo.width << "   " << touchScreenInfo.height << std::endl;
     std::cout << "屏幕分辨率  " << screenInfo.width << "   " << screenInfo.height << std::endl;
-    screenToTouchRatio =
-            (float) (touchScreenInfo.width + touchScreenInfo.height) / (float) (screenInfo.width + screenInfo.height);
+    screenToTouchRatio =(float) (touchScreenInfo.width + touchScreenInfo.height) / (float) (screenInfo.width + screenInfo.height);
     if (screenToTouchRatio < 1 && screenToTouchRatio > 0.9)
     {
         screenToTouchRatio = 1;
@@ -279,19 +278,19 @@ void touch::GetScrorientation()
 Vector2 touch::rotatePointx(const Vector2 &pos, const Vector2& wh, bool reverse) const
 {
     Vector2 xy{pos.x, pos.y};
-    if (this->screenInfo.orientation == 0)
+    if (this->screenInfo.orientation == 0)//竖
     {
         return xy;
     }
-    if (this->screenInfo.orientation == 3)
+    if (this->screenInfo.orientation == 3)//横
     {
         xy.x = reverse ? pos.y : (float) wh.y - pos.y;
         xy.y = reverse ? (float) wh.y - pos.x : pos.x;
-    } else if (this->screenInfo.orientation == 2)
+    } else if (this->screenInfo.orientation == 2)//竖
     {
         xy.x = (float) wh.x - pos.x;
         xy.y = (float) wh.y - pos.y;
-    } else if (this->screenInfo.orientation == 1)
+    } else if (this->screenInfo.orientation == 1)//横
     {
         xy.x = reverse ? (float) wh.x - pos.y : pos.y;
         xy.y = reverse ? pos.x : (float) wh.x - pos.x;

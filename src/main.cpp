@@ -37,12 +37,11 @@
 
 int main()
 {
-    int pid = fork();
-    if(pid == 0)
-    {
-        static auto *touchTest = new touch{};
-        sleep(999999999);
-        delete touchTest;
-    }
+    static auto *touchTest = new touch{};
+    touchTest->touch_down(110, {200, 200});
+    sleep(2);
+    touchTest->touch_move(110, {900, 600});
+    sleep(999999999);
+    delete touchTest;
     return 0;
 }
