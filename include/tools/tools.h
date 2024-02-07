@@ -54,7 +54,7 @@ private:
     int GetindexById(const int& byId);
     void GetScrorientation();//循环获取屏幕方向
     static std::string exec(const std::string& command);
-    Vector2 rotatePointx(const Vector2& pos, const Vector2& wh, bool reverse = false) const;//根据方向来重构坐标,pos是坐标，wh是宽高 --reverse为真代表要反向计算 //举个例子：假如你要在横屏时触摸200，200，就让reverse == ture,假如你要让原始坐标转为实际触摸的就不用动
+    Vector2 rotatePointx(const Vector2& pos, const Vector2& wh, bool reverse = false) const;//根据方向来重构坐标,pos是坐标，wh是宽高 --reverse为真代表要反向计算 //举个例子：假如你要在横屏时触摸200，200，就让reverse == ture,假如你要让原始坐标转为实际触摸的就不用改
     void upLoad();//遍历Finger数组并上报
     void PTScreenEventToFinger();//将物理触摸屏的Event转化存到Finger数组
     void InitTouchScreenInfo();//初始化物理触摸屏info
