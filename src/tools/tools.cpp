@@ -44,6 +44,7 @@ Vector2 &Vector2::operator=(const Vector2 &other)
     return *this;
 }
 
+
 void touch::InitTouchScreenInfo()
 {
     for (const auto &entry: std::filesystem::directory_iterator("/dev/input/"))
@@ -136,7 +137,8 @@ touch::touch()
 
     std::cout << "触摸屏宽高  " << touchScreenInfo.width << "   " << touchScreenInfo.height << std::endl;
     std::cout << "屏幕分辨率  " << screenInfo.width << "   " << screenInfo.height << std::endl;
-    screenToTouchRatio =(float) (touchScreenInfo.width + touchScreenInfo.height) / (float) (screenInfo.width + screenInfo.height);
+    screenToTouchRatio =
+            (float) (screenInfo.width + screenInfo.height) / (float) (touchScreenInfo.width + touchScreenInfo.height);
     if (screenToTouchRatio < 1 && screenToTouchRatio > 0.9)
     {
         screenToTouchRatio = 1;
@@ -249,7 +251,7 @@ void touch::upLoad()
     events.clear();
 }
 
-std::string touch::exec(const std::string& command)
+std::string touch::exec(const std::string &command)
 {
     char buffer[128];
     std::string result{};
@@ -270,12 +272,13 @@ void touch::GetScrorientation()
 {
     while (true)
     {
-        this->screenInfo.orientation = atoi(exec("dumpsys display | grep 'mCurrentOrientation' | cut -d'=' -f2").c_str());
+        this->screenInfo.orientation = atoi(
+                exec("dumpsys display | grep 'mCurrentOrientation' | cut -d'=' -f2").c_str());
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 }
 
-Vector2 touch::rotatePointx(const Vector2 &pos, const Vector2& wh, bool reverse) const
+Vector2 touch::rotatePointx(const Vector2 &pos, const Vector2 &wh, bool reverse) const
 {
     Vector2 xy{pos.x, pos.y};
     if (this->screenInfo.orientation == 0)//竖
@@ -325,16 +328,18 @@ int touch::GetNoUseIndex()
 void touch::touch_down(const int &id, const Vector2 &pos)
 {
     int index = GetNoUseIndex();
-    if(Fingers[1][index].isDown && Fingers[1][index].isUse)
+    if (Fingers[1][index].isDown && Fingers[1][index].isUse)
     {
         return;
     }
     Vector2 newPos = rotatePointx(pos, {screenInfo.width, screenInfo.height}, true);
+    newPos.x /= this->screenToTouchRatio;
+    newPos.y /= this->screenToTouchRatio;
     Fingers[1][index].isDown = true;
     Fingers[1][index].id = id;
     Fingers[1][index].TRACKING_ID = 415411 + id;
-    Fingers[1][index].x = (int)newPos.x;
-    Fingers[1][index].y = (int)newPos.y;
+    Fingers[1][index].x = (int) newPos.x;
+    Fingers[1][index].y = (int) newPos.y;
     Fingers[1][index].isUse = true;
     this->upLoad();
 }
@@ -342,24 +347,26 @@ void touch::touch_down(const int &id, const Vector2 &pos)
 void touch::touch_move(const int &id, const Vector2 &pos)
 {
     int index = GetindexById(id);
-    if(index == -1)
+    if (index == -1)
     {
         return;
     }
-    if(!(Fingers[1][index].isUse && Fingers[1][index].isDown))
+    if (!(Fingers[1][index].isUse && Fingers[1][index].isDown))
     {
         return;
     }
     Vector2 newPos = rotatePointx(pos, {screenInfo.width, screenInfo.height}, true);
-    Fingers[1][index].x = (int)newPos.x;
-    Fingers[1][index].y = (int)newPos.y;
+    newPos.x /= this->screenToTouchRatio;
+    newPos.y /= this->screenToTouchRatio;
+    Fingers[1][index].x = (int) newPos.x;
+    Fingers[1][index].y = (int) newPos.y;
     this->upLoad();
 }
 
 void touch::touch_up(const int &id)
 {
     int index = GetindexById(id);
-    if(!(Fingers[1][index].isDown && Fingers[1][index].isUse))
+    if (!(Fingers[1][index].isDown && Fingers[1][index].isUse))
     {
         return;
     }
