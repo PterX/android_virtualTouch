@@ -8,6 +8,8 @@
     void touch_up(const int& id);//释放
     void touch_move(const int& id,Vector2 pos);//x轴移动到x，y轴移动到y
 ## 关于
+使用多点触控协议A类型
+<br>
 之前使用b协议的版本放到了另一个分支，有需要可以去下载
 <br>
 -_-
