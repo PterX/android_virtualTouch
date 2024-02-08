@@ -137,8 +137,7 @@ touch::touch()
 
     std::cout << "触摸屏宽高  " << touchScreenInfo.width << "   " << touchScreenInfo.height << std::endl;
     std::cout << "屏幕分辨率  " << screenInfo.width << "   " << screenInfo.height << std::endl;
-    screenToTouchRatio =
-            (float) (screenInfo.width + screenInfo.height) / (float) (touchScreenInfo.width + touchScreenInfo.height);
+    screenToTouchRatio =(float) (screenInfo.width + screenInfo.height) / (float) (touchScreenInfo.width + touchScreenInfo.height);
     if (screenToTouchRatio < 1 && screenToTouchRatio > 0.9)
     {
         screenToTouchRatio = 1;

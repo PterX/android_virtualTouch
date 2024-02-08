@@ -38,9 +38,11 @@
 int main()
 {
     static auto *touchTest = new touch{};
-    touchTest->touch_down(110, {200, 200});
+    touchTest->touch_down(110, {100, 200});
     sleep(2);
-    touchTest->touch_move(110, {900, 600});
+    touchTest->touch_move(110, {1300, 850});
+    sleep(2);
+    touchTest->touch_up(110);
     sleep(999999999);
     delete touchTest;
     return 0;
