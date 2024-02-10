@@ -50,9 +50,12 @@ void touch::InitTouchScreenInfo()
     for (const auto &entry: std::filesystem::directory_iterator("/dev/input/"))
     {
         int fd = open(entry.path().c_str(), O_RDWR);
+        if(fd < 0)
+        {
+            std::cout<<"打开"<<entry.path()<<"失败"<<std::endl;
+        }
         input_absinfo absinfo{};
         ioctl(fd, EVIOCGABS(ABS_MT_SLOT), &absinfo);
-
         if (absinfo.maximum == 9)
         {
             this->touchScreenInfo.fd = open(entry.path().c_str(), O_RDWR);
