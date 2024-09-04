@@ -183,10 +183,10 @@ void touch::PTScreenEventToFinger()
                     if (ie.value == -1)
                     {
                         Fingers[0][latestSlot].isDown = false;
-                        Fingers[1][latestSlot].isUse = false;
+                        Fingers[0][latestSlot].isUse = false;
                     } else
                     {
-                        Fingers[1][latestSlot].isUse = true;
+                        Fingers[0][latestSlot].isUse = true;
                         Fingers[0][latestSlot].isDown = true;
                     }
                     continue;
