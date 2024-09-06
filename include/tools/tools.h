@@ -41,6 +41,7 @@ public:
     void touch_up(const int& id);//释放
     void touch_move(const int& id,const Vector2 &pos);//x轴移动到x，y轴移动到y
 private:
+    std::vector<std::thread> threads;//储存PTScreenEventToFingerByFd
     uinput_user_dev usetup{};//驱动信息
     int uinputFd{};//uinput的文件标识符
     std::thread PTScreenEventToFingerThread{};//将物理触摸屏的Event转化存到Finger数组的线程
@@ -57,6 +58,7 @@ private:
     Vector2 rotatePointx(const Vector2& pos, const Vector2& wh, bool reverse = false) const;//根据方向来重构坐标,pos是坐标，wh是宽高 --reverse为真代表要反向计算 //举个例子：假如你要在横屏时触摸200，200，就让reverse == ture,假如你要让原始坐标转为实际触摸的就不用改
     void upLoad();//遍历Finger数组并上报
     void PTScreenEventToFinger();//将物理触摸屏的Event转化存到Finger数组
+    void PTScreenEventToFingerByFd(int fd);//将物理触摸屏的Event转化存到Finger数组
     void InitTouchScreenInfo();//初始化物理触摸屏信息
     void InitScreenInfo();//初始化屏幕信息
 };

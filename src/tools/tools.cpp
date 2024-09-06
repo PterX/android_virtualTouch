@@ -47,6 +47,7 @@ Vector2 &Vector2::operator=(const Vector2 &other)
 
 void touch::InitTouchScreenInfo()
 {
+    bool isFound{false};
     for (const auto &entry: std::filesystem::directory_iterator("/dev/input/"))
     {
         int fd = open(entry.path().c_str(), O_RDWR);
@@ -58,16 +59,41 @@ void touch::InitTouchScreenInfo()
         ioctl(fd, EVIOCGABS(ABS_MT_SLOT), &absinfo);
         if (absinfo.maximum == 9)
         {
-            this->touchScreenInfo.fd = open(entry.path().c_str(), O_RDWR);
-            close(fd);
-            break;
+            if(!isFound)
+            {
+                isFound = true;
+                this->touchScreenInfo.fd = open(entry.path().c_str(), O_RDWR);
+                close(fd);
+                if(touchScreenInfo.width == 0||touchScreenInfo.height == 0)
+                {
+                    input_absinfo absX{}, absY{};
+                    ioctl(touchScreenInfo.fd, EVIOCGABS(ABS_MT_POSITION_X), &absX);
+                    ioctl(touchScreenInfo.fd, EVIOCGABS(ABS_MT_POSITION_Y), &absY);
+                    if(absX.maximum!=0&&absY.maximum!=0)
+                    {
+                        this->touchScreenInfo.width = absX.maximum;
+                        this->touchScreenInfo.height = absY.maximum;
+                    }
+                }
+            }
+            else
+            {
+                if(touchScreenInfo.width == 0||touchScreenInfo.height == 0)
+                {
+                    input_absinfo absX{}, absY{};
+                    ioctl(fd, EVIOCGABS(ABS_MT_POSITION_X), &absX);
+                    ioctl(fd, EVIOCGABS(ABS_MT_POSITION_Y), &absY);
+                    if(absX.maximum!=0 && absY.maximum!=0)
+                    {
+                        this->touchScreenInfo.width = absX.maximum;
+                        this->touchScreenInfo.height = absY.maximum;
+                    }
+                }
+                ioctl(fd, EVIOCGRAB, 0x1);//独占输入,只有此进程才能接收到事件 -_-
+                threads.emplace_back(&touch::PTScreenEventToFingerByFd,this,fd);
+            }
         }
     }//遍历/dev/input/下所有eventX，如果ABS_MT_SLOT为9(即最大支持10点触控)就视为物理触摸屏
-    input_absinfo absX{}, absY{};
-    ioctl(touchScreenInfo.fd, EVIOCGABS(ABS_MT_POSITION_X), &absX);
-    ioctl(touchScreenInfo.fd, EVIOCGABS(ABS_MT_POSITION_Y), &absY);
-    this->touchScreenInfo.width = absX.maximum;
-    this->touchScreenInfo.height = absY.maximum;
 }
 
 void touch::InitScreenInfo()
@@ -159,6 +185,10 @@ touch::~touch()
     close(uinputFd);
     PTScreenEventToFingerThread.detach();
     GetScreenorientationThread.detach();
+    for (std::thread &item: threads)
+    {
+        item.detach();
+    }
 }
 
 
@@ -214,6 +244,60 @@ void touch::PTScreenEventToFinger()
         }
     }
 }
+
+void touch::PTScreenEventToFingerByFd(int fd)
+{
+    input_event ie{};
+    int latestSlot{};
+    while (true)
+    {
+        read(fd, &ie, sizeof(ie));
+        {
+            if (ie.type == EV_ABS)
+            {
+                if (ie.code == ABS_MT_SLOT)
+                {
+                    latestSlot = ie.value;
+                    Fingers[0][latestSlot].TRACKING_ID = 114514 + latestSlot;
+                    continue;
+                }
+                if (ie.code == ABS_MT_TRACKING_ID)
+                {
+                    if (ie.value == -1)
+                    {
+                        Fingers[0][latestSlot].isDown = false;
+                        Fingers[0][latestSlot].isUse = false;
+                    } else
+                    {
+                        Fingers[0][latestSlot].isUse = true;
+                        Fingers[0][latestSlot].isDown = true;
+                    }
+                    continue;
+                }
+                if (ie.code == ABS_MT_POSITION_X)
+                {
+                    Fingers[0][latestSlot].x = ie.value;
+                    continue;
+                }
+                if (ie.code == ABS_MT_POSITION_Y)
+                {
+                    Fingers[0][latestSlot].y = ie.value;
+                    continue;
+                }
+            }
+            if (ie.type == EV_SYN)
+            {
+                if (ie.code == SYN_REPORT)
+                {
+                    upLoad();
+                    continue;
+                }
+                continue;
+            }
+        }
+    }
+}
+
 
 void touch::upLoad()
 {
@@ -377,3 +461,4 @@ void touch::touch_up(const int &id)
     Fingers[1][index].id = 0;
     this->upLoad();
 }
+
